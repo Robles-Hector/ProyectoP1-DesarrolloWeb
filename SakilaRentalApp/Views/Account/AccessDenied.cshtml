@@ -1,0 +1,34 @@
+@{
+    ViewData["Title"] = "Acceso Denegado";
+}
+
+<div class="row justify-content-center py-5">
+    <div class="col-md-7 text-center">
+        <div class="card shadow border-danger border-2 rounded-4 p-4">
+            <div class="card-body">
+                <i class="bi bi-shield-x text-danger display-1 mb-3"></i>
+                <h2 class="text-danger fw-bold">403 - Acceso Denegado</h2>
+                <h5 class="text-secondary mt-3">Autorización Requerida</h5>
+                
+                <div class="alert alert-warning my-4 text-start">
+                    <i class="bi bi-exclamation-triangle-fill me-2 fs-5 text-warning"></i>
+                    <strong>Mensaje del Sistema:</strong>
+                    <p class="mb-0 mt-1">@ViewBag.Mensaje</p>
+                </div>
+
+                <p class="text-muted small">
+                    El sistema de autorización ha detectado que su usuario actual no cuenta con los permisos necesarios para ejecutar esta acción o acceder directamente a esta URL.
+                </p>
+
+                <div class="d-flex justify-content-center gap-3 mt-4">
+                    <a asp-controller="Home" asp-action="Index" class="btn btn-outline-primary">
+                        <i class="bi bi-house-door me-1"></i> Ir al Inicio
+                    </a>
+                    <a asp-controller="Peliculas" asp-action="Index" class="btn btn-primary">
+                        <i class="bi bi-collection-play me-1"></i> Ver Catálogo de Películas
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

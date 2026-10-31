@@ -1,0 +1,240 @@
+@model SakilaRentalApp.Models.ViewModels.FilmDetailViewModel
+
+@{
+    ViewData["Title"] = Model.Pelicula.Title;
+    bool estaAutenticado = Context.Session.EstaAutenticado();
+    bool esCliente = Context.Session.EsCliente();
+    bool esAdmin = Context.Session.EsAdmin();
+}
+
+<div class="mb-3">
+    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i> Volver al Catálogo
+    </a>
+</div>
+
+<div class="row g-4">
+    <!-- Información Principal de la Película -->
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0 rounded-3 mb-4">
+            <div class="card-body p-4">
+                <div class="d-flex flex-wrap justify-content-between align-items-start mb-3">
+                    <div>
+                        <span class="badge bg-secondary fs-6 me-2">@Model.Pelicula.Rating</span>
+                        <span class="badge bg-primary fs-6 me-2">@Model.Pelicula.LanguageName</span>
+                        <span class="text-muted"><i class="bi bi-calendar3 me-1"></i> @(Model.Pelicula.ReleaseYear ?? "2006")</span>
+                    </div>
+                    @if (Model.Pelicula.TieneDisponibilidad)
+                    {
+                        <span class="badge bg-success fs-6 p-2">
+                            <i class="bi bi-check-circle-fill me-1"></i> Disponible (@Model.Pelicula.CopiasDisponibles de @Model.Pelicula.TotalCopias copias)
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-danger fs-6 p-2">
+                            <i class="bi bi-x-circle-fill me-1"></i> Agotada (0 de @Model.Pelicula.TotalCopias disponibles)
+                        </span>
+                    }
+                </div>
+
+                <h1 class="card-title fw-bold text-dark display-6 mb-3">@Model.Pelicula.Title</h1>
+
+                <h6 class="text-uppercase text-muted fw-bold small">Sinopsis / Descripción</h6>
+                <p class="lead fs-6 text-secondary mb-4">
+                    @(string.IsNullOrEmpty(Model.Pelicula.Description) ? "Sin sinopsis registrada." : Model.Pelicula.Description)
+                </p>
+
+                <div class="row g-3 bg-light p-3 rounded-3 mb-4">
+                    <div class="col-sm-6 col-md-3">
+                        <small class="text-muted d-block">Duración de Renta</small>
+                        <span class="fw-bold">@Model.Pelicula.RentalDuration días</span>
+                    </div>
+                    <div class="col-sm-6 col-md-3">
+                        <small class="text-muted d-block">Tarifa de Alquiler</small>
+                        <span class="fw-bold text-success fs-5">$@Model.Pelicula.RentalRate</span>
+                    </div>
+                    <div class="col-sm-6 col-md-3">
+                        <small class="text-muted d-block">Duración del Film</small>
+                        <span class="fw-bold">@(Model.Pelicula.Length ?? 0) minutos</span>
+                    </div>
+                    <div class="col-sm-6 col-md-3">
+                        <small class="text-muted d-block">Costo de Reemplazo</small>
+                        <span class="fw-bold text-danger">$@Model.Pelicula.ReplacementCost</span>
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.Pelicula.SpecialFeatures))
+                {
+                    <div class="mb-3">
+                        <small class="text-muted d-block fw-bold mb-1">Características Especiales:</small>
+                        <span class="badge bg-dark">@Model.Pelicula.SpecialFeatures</span>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Copias Físicas en Inventario (Sakila inventory) -->
+        <div class="card shadow-sm border-0 rounded-3">
+            <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0 text-dark">
+                    <i class="bi bi-boxes text-primary me-2"></i> Copias Físicas en Inventario (@Model.CopiasInventario.Count)
+                </h5>
+                @if (esAdmin)
+                {
+                    <a asp-controller="AdminPeliculas" asp-action="Inventario" asp-route-id="@Model.Pelicula.FilmId" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-gear me-1"></i> Administrar Copias
+                    </a>
+                }
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th># Inventario</th>
+                                <th>Tienda (Store)</th>
+                                <th>Estado Actual</th>
+                                <th>Detalle</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.CopiasInventario.Count == 0)
+                            {
+                                <tr>
+                                    <td colspan="4" class="text-center py-4 text-muted">
+                                        No hay copias físicas registradas en el inventario para esta película.
+                                    </td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var copia in Model.CopiasInventario)
+                                {
+                                    <tr>
+                                        <td><span class="badge bg-dark">#@copia.InventoryId</span></td>
+                                        <td>Tienda @copia.StoreId</td>
+                                        <td>
+                                            @if (copia.EstaAlquilada)
+                                            {
+                                                <span class="badge bg-warning text-dark">
+                                                    <i class="bi bi-clock-history me-1"></i> En Préstamo
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-success">
+                                                    <i class="bi bi-check-circle me-1"></i> Disponible en Estantería
+                                                </span>
+                                            }
+                                        </td>
+                                        <td class="small text-muted">
+                                            @if (copia.EstaAlquilada && esAdmin)
+                                            {
+                                                <span>Alquilada por: <strong>@copia.CurrentCustomerName</strong></span>
+                                            }
+                                            else if (copia.EstaAlquilada)
+                                            {
+                                                <span>Alquilada</span>
+                                            }
+                                            else
+                                            {
+                                                <span>Lista para alquiler</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel Lateral de Acción de Alquiler -->
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0 rounded-3 sticky-top" style="top: 20px;">
+            <div class="card-header bg-dark text-white py-3">
+                <h5 class="mb-0 fw-bold">
+                    <i class="bi bi-cart-check me-2 text-warning"></i> Alquiler de Película
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="text-muted">Tarifa de alquiler:</span>
+                    <span class="fs-4 fw-bold text-success">$@Model.Pelicula.RentalRate</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="text-muted">Tiempo para devolución:</span>
+                    <span class="fw-semibold">@Model.Pelicula.RentalDuration días</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <span class="text-muted">Copias libres hoy:</span>
+                    <span class="badge @(Model.Pelicula.TieneDisponibilidad ? "bg-success" : "bg-danger") fs-6">
+                        @Model.Pelicula.CopiasDisponibles
+                    </span>
+                </div>
+
+                <hr />
+
+                @if (esCliente)
+                {
+                    @if (Model.Pelicula.TieneDisponibilidad)
+                    {
+                        <div class="alert alert-info small mb-3">
+                            <i class="bi bi-person-check-fill me-1"></i> Se alquilará a nombre de su cuenta: <strong>@Context.Session.GetNombreCompleto()</strong>.
+                        </div>
+
+                        <form asp-controller="Alquileres" asp-action="Alquilar" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="filmId" value="@Model.Pelicula.FilmId" />
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-success btn-lg shadow-sm" onclick="return confirm('¿Confirmar el alquiler de esta película?');">
+                                    <i class="bi bi-bag-plus-fill me-2"></i> Confirmar Alquiler
+                                </button>
+                            </div>
+                        </form>
+                    }
+                    else
+                    {
+                        <div class="alert alert-danger small mb-0">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                            <strong>Película Agotada:</strong> Todas las copias de esta película se encuentran alquiladas por otros clientes. De acuerdo con las reglas de negocio, debe esperar a que se devuelva una copia.
+                        </div>
+                        <div class="d-grid mt-3">
+                            <button class="btn btn-secondary btn-lg" disabled>
+                                <i class="bi bi-x-circle me-1"></i> No Disponible
+                            </button>
+                        </div>
+                    }
+                }
+                else if (esAdmin)
+                {
+                    <div class="alert alert-warning small mb-3">
+                        <i class="bi bi-shield-lock me-1"></i> Ha iniciado sesión como <strong>Administrador</strong>. La renta directa es para usuarios con rol Cliente.
+                    </div>
+                    <div class="d-grid gap-2">
+                        <a asp-controller="AdminPeliculas" asp-action="Editar" asp-route-id="@Model.Pelicula.FilmId" class="btn btn-primary">
+                            <i class="bi bi-pencil-square me-1"></i> Editar Película
+                        </a>
+                        <a asp-controller="AdminPeliculas" asp-action="Inventario" asp-route-id="@Model.Pelicula.FilmId" class="btn btn-outline-primary">
+                            <i class="bi bi-boxes me-1"></i> Gestionar Inventario
+                        </a>
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-secondary small mb-3">
+                        <i class="bi bi-info-circle me-1"></i> Para alquilar esta película debe iniciar sesión con su cuenta de cliente.
+                    </div>
+                    <div class="d-grid">
+                        <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@Context.Request.Path" class="btn btn-primary btn-lg shadow-sm">
+                            <i class="bi bi-box-arrow-in-right me-2"></i> Iniciar Sesión para Alquilar
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

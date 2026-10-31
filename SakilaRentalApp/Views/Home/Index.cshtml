@@ -1,0 +1,147 @@
+@{
+    ViewData["Title"] = "Inicio";
+    bool estaAutenticado = Context.Session.EstaAutenticado();
+    string? nombreCompleto = Context.Session.GetNombreCompleto();
+    string? rol = Context.Session.GetRol();
+    bool esAdmin = Context.Session.EsAdmin();
+    bool esCliente = Context.Session.EsCliente();
+    var destacadas = ViewBag.PeliculasDestacadas as List<SakilaRentalApp.Models.Film> ?? new List<SakilaRentalApp.Models.Film>();
+}
+
+<!-- Hero Banner -->
+<div class="p-5 mb-4 bg-dark text-white rounded-4 shadow-sm border border-secondary position-relative overflow-hidden">
+    <div class="row align-items-center">
+        <div class="col-lg-8">
+            <span class="badge bg-warning text-dark px-3 py-2 text-uppercase fw-bold mb-3">
+                <i class="bi bi-star-fill me-1"></i> Sistema de Renta de Películas Sakila
+            </span>
+            <h1 class="display-5 fw-bold">Bienvenido a Sakila Movie Rental</h1>
+            <p class="lead text-white-50">
+                Plataforma web en ASP.NET Core MVC y ADO.NET conectada a SQL Server. Gestiona inventario de copias, disponibilidad en tiempo real, alquileres y devoluciones para clientes y administradores.
+            </p>
+            <div class="d-flex flex-wrap gap-2 mt-4">
+                <a asp-controller="Peliculas" asp-action="Index" class="btn btn-primary btn-lg shadow-sm">
+                    <i class="bi bi-collection-play me-2"></i> Explorar Catálogo
+                </a>
+                <a asp-controller="Reportes" asp-action="PeliculasMasAlquiladas" class="btn btn-outline-light btn-lg">
+                    <i class="bi bi-bar-chart-line me-2"></i> Reporte Top 10
+                </a>
+                @if (esCliente)
+                {
+                    <a asp-controller="Alquileres" asp-action="MisAlquileres" class="btn btn-success btn-lg shadow-sm">
+                        <i class="bi bi-clock-history me-2"></i> Mis Alquileres
+                    </a>
+                }
+                @if (esAdmin)
+                {
+                    <a asp-controller="AdminPeliculas" asp-action="Index" class="btn btn-danger btn-lg shadow-sm">
+                        <i class="bi bi-shield-lock me-2"></i> Panel de Administración
+                    </a>
+                }
+            </div>
+        </div>
+        <div class="col-lg-4 text-center d-none d-lg-block">
+            <i class="bi bi-camera-reels display-1 text-warning opacity-75"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Métricas en Tiempo Real de la BD Sakila -->
+<div class="row g-4 mb-5">
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-3 bg-white h-100 border-start border-4 border-primary">
+            <div class="card-body d-flex align-items-center">
+                <div class="bg-primary bg-opacity-10 text-primary p-3 rounded-circle me-3">
+                    <i class="bi bi-film fs-3"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted small text-uppercase mb-1">Películas Activas</h6>
+                    <h3 class="fw-bold mb-0 text-dark">@ViewBag.TotalPeliculas</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-3 bg-white h-100 border-start border-4 border-success">
+            <div class="card-body d-flex align-items-center">
+                <div class="bg-success bg-opacity-10 text-success p-3 rounded-circle me-3">
+                    <i class="bi bi-bag-check fs-3"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted small text-uppercase mb-1">Alquileres Históricos</h6>
+                    <h3 class="fw-bold mb-0 text-dark">@ViewBag.TotalAlquileres</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-3 bg-white h-100 border-start border-4 border-warning">
+            <div class="card-body d-flex align-items-center">
+                <div class="bg-warning bg-opacity-10 text-warning p-3 rounded-circle me-3">
+                    <i class="bi bi-hourglass-split fs-3"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted small text-uppercase mb-1">En Préstamo Activo</h6>
+                    <h3 class="fw-bold mb-0 text-dark">@ViewBag.AlquileresActivos</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-3 bg-white h-100 border-start border-info">
+            <div class="card-body d-flex align-items-center">
+                <div class="bg-info bg-opacity-10 text-info p-3 rounded-circle me-3">
+                    <i class="bi bi-people fs-3"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted small text-uppercase mb-1">Clientes Registrados</h6>
+                    <h3 class="fw-bold mb-0 text-dark">@ViewBag.TotalClientes</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Películas Destacadas con Disponibilidad -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold text-dark mb-0">
+            <i class="bi bi-fire text-danger me-2"></i> Películas Disponibles para Alquilar
+        </h3>
+        <p class="text-muted small mb-0">Disponibilidad en tiempo real calculada con film &rarr; inventory &rarr; rental</p>
+    </div>
+    <a asp-controller="Peliculas" asp-action="Index" class="btn btn-outline-primary btn-sm">
+        Ver catálogo completo <i class="bi bi-arrow-right"></i>
+    </a>
+</div>
+
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-5">
+    @foreach (var film in destacadas)
+    {
+        <div class="col">
+            <div class="card h-100 shadow-sm border-0 rounded-3">
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <span class="badge bg-secondary">@film.Rating</span>
+                        <span class="badge bg-success">@film.CopiasDisponibles copias libres</span>
+                    </div>
+                    <h5 class="card-title fw-bold text-dark">@film.Title</h5>
+                    <p class="card-text text-muted small flex-grow-1">
+                        @(string.IsNullOrEmpty(film.Description) ? "Sin descripción disponible." : 
+                            (film.Description.Length > 120 ? film.Description.Substring(0, 117) + "..." : film.Description))
+                    </p>
+                    <div class="d-flex justify-content-between align-items-center text-muted small mt-2 mb-3">
+                        <span><i class="bi bi-calendar3 me-1"></i> @(film.ReleaseYear ?? "2006")</span>
+                        <span><i class="bi bi-clock me-1"></i> @(film.Length ?? 90) min</span>
+                        <span class="fw-bold text-primary fs-6">$@film.RentalRate</span>
+                    </div>
+                    <div class="d-grid">
+                        <a asp-controller="Peliculas" asp-action="Detalle" asp-route-id="@film.FilmId" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-info-circle me-1"></i> Ver Detalles y Alquilar
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>

@@ -1,0 +1,154 @@
+@model SakilaRentalApp.Models.ViewModels.FilmCatalogViewModel
+
+@{
+    ViewData["Title"] = "Catálogo de Películas";
+    bool esCliente = Context.Session.EsCliente();
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold text-dark mb-1">
+            <i class="bi bi-collection-play-fill text-primary me-2"></i> Catálogo de Películas
+        </h2>
+        <p class="text-muted small mb-0">Consulte las películas disponibles y gestione sus alquileres.</p>
+    </div>
+    <div>
+        <span class="badge bg-light text-dark border px-3 py-2">
+            Mostrando <strong>@Model.Peliculas.Count</strong> de <strong>@Model.TotalRegistros</strong> títulos
+        </span>
+    </div>
+</div>
+
+<!-- Barra de Filtros y Búsqueda -->
+<div class="card shadow-sm border-0 rounded-3 mb-4 bg-white">
+    <div class="card-body p-3">
+        <form method="get" asp-action="Index" class="row g-2 align-items-center">
+            <div class="col-md-4">
+                <div class="input-group">
+                    <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
+                    <input type="text" name="buscar" value="@Model.Buscar" class="form-control" placeholder="Buscar por título de película..." />
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select name="rating" class="form-select" asp-items="Model.Ratings" asp-for="Rating">
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select name="disponibilidad" class="form-select" asp-for="Disponibilidad">
+                    <option value="">Todas las películas</option>
+                    <option value="disponibles">Solo con copias disponibles</option>
+                    <option value="agotadas">Solo agotadas (sin copias)</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-primary flex-grow-1">
+                    <i class="bi bi-funnel me-1"></i> Filtrar
+                </button>
+                <a asp-action="Index" class="btn btn-outline-secondary" title="Limpiar filtros">
+                    <i class="bi bi-x-circle"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Listado en Cuadrícula -->
+@if (Model.Peliculas.Count == 0)
+{
+    <div class="alert alert-warning text-center py-5 shadow-sm rounded-3">
+        <i class="bi bi-search display-4 text-warning mb-3 d-block"></i>
+        <h5>No se encontraron películas</h5>
+        <p class="text-muted mb-3">No hay resultados que coincidan con los criterios de búsqueda seleccionados.</p>
+        <a asp-action="Index" class="btn btn-outline-primary">Ver todas las películas</a>
+    </div>
+}
+else
+{
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4 mb-4">
+        @foreach (var film in Model.Peliculas)
+        {
+            <div class="col">
+                <div class="card h-100 shadow-sm border-0 rounded-3 d-flex flex-column">
+                    <div class="card-header bg-transparent border-0 pt-3 px-3 pb-0 d-flex justify-content-between align-items-center">
+                        <span class="badge bg-secondary">@film.Rating</span>
+                        @if (film.TieneDisponibilidad)
+                        {
+                            <span class="badge bg-success" title="Copias disponibles en inventario">
+                                <i class="bi bi-check-circle me-1"></i> @film.CopiasDisponibles / @film.TotalCopias disp.
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger" title="Todas las copias están alquiladas o sin inventario">
+                                <i class="bi bi-x-circle me-1"></i> @(film.TotalCopias == 0 ? "Sin stock" : "Agotada")
+                            </span>
+                        }
+                    </div>
+                    <div class="card-body px-3 py-2 d-flex flex-column">
+                        <h5 class="card-title fw-bold text-dark mt-1 mb-2">@film.Title</h5>
+                        <p class="card-text text-muted small flex-grow-1">
+                            @(string.IsNullOrEmpty(film.Description) ? "Sin descripción disponible." : 
+                                (film.Description.Length > 95 ? film.Description.Substring(0, 92) + "..." : film.Description))
+                        </p>
+                        <div class="d-flex justify-content-between align-items-center border-top pt-2 mt-2 text-muted small">
+                            <span><i class="bi bi-calendar3 me-1"></i> @(film.ReleaseYear ?? "2006")</span>
+                            <span><i class="bi bi-translate me-1"></i> @film.LanguageName</span>
+                            <span class="fw-bold text-primary fs-6">$@film.RentalRate</span>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-light border-0 p-3 pt-0">
+                        <div class="d-grid gap-2">
+                            <a asp-action="Detalle" asp-route-id="@film.FilmId" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-eye me-1"></i> Ver Detalles y Renta
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Paginación -->
+    @if (Model.TotalPaginas > 1)
+    {
+        <nav aria-label="Paginación de catálogo" class="mt-4">
+            <ul class="pagination justify-content-center">
+                <li class="page-item @(Model.PaginaActual <= 1 ? "disabled" : "")">
+                    <a class="page-link" asp-action="Index" 
+                       asp-route-pagina="@(Model.PaginaActual - 1)"
+                       asp-route-buscar="@Model.Buscar"
+                       asp-route-rating="@Model.Rating"
+                       asp-route-disponibilidad="@Model.Disponibilidad">
+                        <i class="bi bi-chevron-left"></i> Anterior
+                    </a>
+                </li>
+
+                @{
+                    int startPage = Math.Max(1, Model.PaginaActual - 2);
+                    int endPage = Math.Min(Model.TotalPaginas, Model.PaginaActual + 2);
+                }
+
+                @for (int i = startPage; i <= endPage; i++)
+                {
+                    <li class="page-item @(i == Model.PaginaActual ? "active" : "")">
+                        <a class="page-link" asp-action="Index"
+                           asp-route-pagina="@i"
+                           asp-route-buscar="@Model.Buscar"
+                           asp-route-rating="@Model.Rating"
+                           asp-route-disponibilidad="@Model.Disponibilidad">@i</a>
+                    </li>
+                }
+
+                <li class="page-item @(Model.PaginaActual >= Model.TotalPaginas ? "disabled" : "")">
+                    <a class="page-link" asp-action="Index"
+                       asp-route-pagina="@(Model.PaginaActual + 1)"
+                       asp-route-buscar="@Model.Buscar"
+                       asp-route-rating="@Model.Rating"
+                       asp-route-disponibilidad="@Model.Disponibilidad">
+                        Siguiente <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    }
+}
