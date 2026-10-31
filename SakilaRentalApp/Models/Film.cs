@@ -7,7 +7,7 @@ namespace SakilaRentalApp.Models
         public int FilmId { get; set; }
 
         [Required(ErrorMessage = "El título de la película es obligatorio.")]
-        [StringLength(128, ErrorMessage = "El título no puede superar los 128 caracteres.")]
+        [StringLength(255, ErrorMessage = "El título no puede superar los 255 caracteres.")]
         [Display(Name = "Título")]
         public string Title { get; set; } = string.Empty;
 

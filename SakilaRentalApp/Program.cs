@@ -1,11 +1,17 @@
+using Microsoft.AspNetCore.Localization;
 using SakilaRentalApp.Data;
+using SakilaRentalApp.Utils;
+using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configuración de servicios MVC
-builder.Services.AddControllersWithViews();
+// Configuración de servicios MVC con soporte universal para decimales
+builder.Services.AddControllersWithViews(options =>
+{
+    options.ModelBinderProviders.Insert(0, new InvariantDecimalModelBinderProvider());
+});
 
-// Configuración de Sesiones
+// Configuración de Sesiones (Session)
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
@@ -24,6 +30,19 @@ builder.Services.AddScoped<RentalRepository>();
 builder.Services.AddScoped<ReporteRepository>();
 
 var app = builder.Build();
+
+// Configuración de cultura para formateo consistente de fechas y moneda
+var defaultCulture = new CultureInfo("es-EC");
+defaultCulture.NumberFormat.NumberDecimalSeparator = ".";
+defaultCulture.NumberFormat.CurrencyDecimalSeparator = ".";
+
+var localizationOptions = new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new RequestCulture(defaultCulture),
+    SupportedCultures = new List<CultureInfo> { defaultCulture },
+    SupportedUICultures = new List<CultureInfo> { defaultCulture }
+};
+app.UseRequestLocalization(localizationOptions);
 
 // Inicialización automática de la base de datos (Retos 1 y 2 + Seed de usuarios iniciales)
 using (var scope = app.Services.CreateScope())

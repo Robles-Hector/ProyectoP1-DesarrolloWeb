@@ -217,9 +217,19 @@ namespace SakilaRentalApp.Data
             cmd.Parameters.Add("@LanguageId", SqlDbType.TinyInt).Value = film.LanguageId;
             cmd.Parameters.Add("@OriginalLanguageId", SqlDbType.TinyInt).Value = (object?)film.OriginalLanguageId ?? DBNull.Value;
             cmd.Parameters.Add("@RentalDuration", SqlDbType.TinyInt).Value = film.RentalDuration;
-            cmd.Parameters.Add("@RentalRate", SqlDbType.Decimal).Value = film.RentalRate;
+
+            var pRate = cmd.Parameters.Add("@RentalRate", SqlDbType.Decimal);
+            pRate.Precision = 4;
+            pRate.Scale = 2;
+            pRate.Value = film.RentalRate;
+
             cmd.Parameters.Add("@Length", SqlDbType.SmallInt).Value = (object?)film.Length ?? DBNull.Value;
-            cmd.Parameters.Add("@ReplacementCost", SqlDbType.Decimal).Value = film.ReplacementCost;
+
+            var pCost = cmd.Parameters.Add("@ReplacementCost", SqlDbType.Decimal);
+            pCost.Precision = 5;
+            pCost.Scale = 2;
+            pCost.Value = film.ReplacementCost;
+
             cmd.Parameters.Add("@Rating", SqlDbType.VarChar, 10).Value = film.Rating;
             cmd.Parameters.Add("@SpecialFeatures", SqlDbType.VarChar, 255).Value = (object?)film.SpecialFeatures ?? DBNull.Value;
             cmd.Parameters.Add("@IsDeleted", SqlDbType.Bit).Value = film.IsDeleted;
@@ -255,9 +265,19 @@ namespace SakilaRentalApp.Data
             cmd.Parameters.Add("@ReleaseYear", SqlDbType.VarChar, 4).Value = (object?)film.ReleaseYear ?? DBNull.Value;
             cmd.Parameters.Add("@LanguageId", SqlDbType.TinyInt).Value = film.LanguageId;
             cmd.Parameters.Add("@RentalDuration", SqlDbType.TinyInt).Value = film.RentalDuration;
-            cmd.Parameters.Add("@RentalRate", SqlDbType.Decimal).Value = film.RentalRate;
+
+            var pRate = cmd.Parameters.Add("@RentalRate", SqlDbType.Decimal);
+            pRate.Precision = 4;
+            pRate.Scale = 2;
+            pRate.Value = film.RentalRate;
+
             cmd.Parameters.Add("@Length", SqlDbType.SmallInt).Value = (object?)film.Length ?? DBNull.Value;
-            cmd.Parameters.Add("@ReplacementCost", SqlDbType.Decimal).Value = film.ReplacementCost;
+
+            var pCost = cmd.Parameters.Add("@ReplacementCost", SqlDbType.Decimal);
+            pCost.Precision = 5;
+            pCost.Scale = 2;
+            pCost.Value = film.ReplacementCost;
+
             cmd.Parameters.Add("@Rating", SqlDbType.VarChar, 10).Value = film.Rating;
             cmd.Parameters.Add("@SpecialFeatures", SqlDbType.VarChar, 255).Value = (object?)film.SpecialFeatures ?? DBNull.Value;
             cmd.Parameters.Add("@IsDeleted", SqlDbType.Bit).Value = film.IsDeleted;

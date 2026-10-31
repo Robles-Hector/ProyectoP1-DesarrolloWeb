@@ -21,7 +21,20 @@ namespace SakilaRentalApp.Filters
             // 1. Verificar si el usuario ha iniciado sesión
             if (!session.EstaAutenticado())
             {
-                string returnUrl = context.HttpContext.Request.Path + context.HttpContext.Request.QueryString;
+                string returnUrl;
+                if (HttpMethods.IsGet(context.HttpContext.Request.Method))
+                {
+                    returnUrl = context.HttpContext.Request.Path + context.HttpContext.Request.QueryString;
+                }
+                else
+                {
+                    // Para peticiones POST/DELETE, redirigir al origen (Referer) o al inicio para evitar 404
+                    string? referer = context.HttpContext.Request.Headers.Referer;
+                    returnUrl = !string.IsNullOrEmpty(referer) && Uri.TryCreate(referer, UriKind.RelativeOrAbsolute, out var uri)
+                        ? (uri.IsAbsoluteUri ? uri.PathAndQuery : uri.ToString())
+                        : "/";
+                }
+
                 context.Result = new RedirectToActionResult("Login", "Account", new { returnUrl });
                 return;
             }
@@ -36,7 +49,6 @@ namespace SakilaRentalApp.Filters
 
                 if (!tienePermiso)
                 {
-                    // Redirigir a pantalla de acceso denegado si intenta acceder a una URL restringida
                     context.Result = new RedirectToActionResult("AccessDenied", "Account", new 
                     { 
                         mensaje = $"Acceso restringido: Se requiere rol {string.Join(" o ", _allowedRoles)} para realizar esta operación." 

@@ -49,7 +49,27 @@ namespace SakilaRentalApp.Data
                     }
                 }
 
-                // 2. Buscar una copia de inventario disponible para esta película
+                // 2. Regla de negocio adicional: Verificar si el cliente ya tiene una copia en préstamo activo
+                const string checkActiveRentalSql = @"
+                    SELECT COUNT(*) 
+                    FROM rental r 
+                    INNER JOIN inventory i ON r.inventory_id = i.inventory_id 
+                    WHERE i.film_id = @FilmId 
+                      AND r.customer_id = @CustomerId 
+                      AND r.return_date IS NULL;";
+
+                using (var checkActiveCmd = new SqlCommand(checkActiveRentalSql, conn, tx))
+                {
+                    checkActiveCmd.Parameters.Add("@FilmId", SqlDbType.Int).Value = filmId;
+                    checkActiveCmd.Parameters.Add("@CustomerId", SqlDbType.Int).Value = customerId;
+                    int activeRentals = (int)(await checkActiveCmd.ExecuteScalarAsync() ?? 0);
+                    if (activeRentals > 0)
+                    {
+                        return (false, $"Ya cuentas con una copia de '{filmTitle}' en préstamo activo. Por favor devuelve la copia actual antes de solicitar un nuevo alquiler del mismo título.", 0);
+                    }
+                }
+
+                // 3. Buscar una copia de inventario disponible para esta película
                 const string findCopySql = @"
                     SELECT TOP 1 i.inventory_id
                     FROM inventory i WITH (UPDLOCK, ROWLOCK)
@@ -75,10 +95,23 @@ namespace SakilaRentalApp.Data
                 // Si no hay copias libres, aplicar regla de disponibilidad
                 if (!availableInventoryId.HasValue)
                 {
+                    const string checkStockSql = "SELECT COUNT(*) FROM inventory WHERE film_id = @FilmId;";
+                    int totalStock = 0;
+                    using (var stockCmd = new SqlCommand(checkStockSql, conn, tx))
+                    {
+                        stockCmd.Parameters.Add("@FilmId", SqlDbType.Int).Value = filmId;
+                        totalStock = (int)(await stockCmd.ExecuteScalarAsync() ?? 0);
+                    }
+
+                    if (totalStock == 0)
+                    {
+                        return (false, $"La película '{filmTitle}' no cuenta con copias registradas en inventario.", 0);
+                    }
+
                     return (false, $"Lo sentimos, todas las copias de '{filmTitle}' se encuentran alquiladas actualmente. Intente más tarde.", 0);
                 }
 
-                // 3. Registrar el alquiler en la tabla rental
+                // 4. Registrar el alquiler en la tabla rental
                 const string insertRentalSql = @"
                     INSERT INTO rental (rental_date, inventory_id, customer_id, return_date, staff_id, last_update)
                     VALUES (GETDATE(), @InventoryId, @CustomerId, NULL, @StaffId, GETDATE());
