@@ -5,6 +5,12 @@ using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configuración de puerto seguro (5217) para evitar conflictos con el puerto 5000 en el equipo
+if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("ASPNETCORE_URLS")))
+{
+    builder.WebHost.UseUrls("http://localhost:5217");
+}
+
 // Configuración de servicios MVC con soporte universal para decimales
 builder.Services.AddControllersWithViews(options =>
 {
