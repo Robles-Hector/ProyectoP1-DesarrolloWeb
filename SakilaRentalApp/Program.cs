@@ -3,7 +3,24 @@ using SakilaRentalApp.Data;
 using SakilaRentalApp.Utils;
 using System.Globalization;
 
-var builder = WebApplication.CreateBuilder(args);
+// Determinar las rutas de contenido y archivos estáticos (wwwroot) automáticamente,
+// permitiendo ejecutar la app tanto desde Visual Studio, dotnet run, o directamente desde bin/Debug/net10.0
+string baseDir = AppContext.BaseDirectory;
+string? projectDir = Directory.GetParent(baseDir)?.Parent?.Parent?.FullName;
+string contentRoot = (projectDir != null && Directory.Exists(Path.Combine(projectDir, "wwwroot")))
+    ? projectDir
+    : baseDir;
+
+string webRoot = Directory.Exists(Path.Combine(contentRoot, "wwwroot"))
+    ? Path.Combine(contentRoot, "wwwroot")
+    : (Directory.Exists(Path.Combine(baseDir, "wwwroot")) ? Path.Combine(baseDir, "wwwroot") : "wwwroot");
+
+var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+{
+    Args = args,
+    ContentRootPath = contentRoot,
+    WebRootPath = webRoot
+});
 
 // Configuración de puerto seguro (5217) para evitar conflictos con el puerto 5000 en el equipo
 if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("ASPNETCORE_URLS")))
@@ -61,10 +78,8 @@ using (var scope = app.Services.CreateScope())
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    app.UseHsts();
 }
 
-app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
