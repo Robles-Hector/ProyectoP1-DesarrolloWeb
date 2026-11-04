@@ -10,3 +10,8 @@
 *.sln.docstates
 .vscode/
 appsettings.Development.json
+
+*.docx
+*INFORME*
+*Informe*
+
